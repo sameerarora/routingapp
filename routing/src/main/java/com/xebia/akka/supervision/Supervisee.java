@@ -15,7 +15,7 @@ public class Supervisee extends UntypedActor {
 			if (value < 50) {
 				throw new ArithmeticException("Value Should be greater than 50");
 			}
-			System.out.println(" Processed Correct Message Valued " + value);
+			getSender().tell(new Result());
 		} else {
 			throw new IllegalArgumentException("Only Integers are supported...");
 		}

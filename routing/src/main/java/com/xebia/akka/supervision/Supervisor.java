@@ -33,6 +33,10 @@ public class Supervisor extends UntypedActor {
 
 	@Override
 	public void onReceive(Object message) throws Exception {
+		
+		if(message instanceof Result){
+			getSender().tell(message);
+		}
 		getContext().actorOf(new Props(Supervisee.class)).forward(message,
 				getContext());
 	}

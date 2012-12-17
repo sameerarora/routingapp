@@ -1,39 +1,42 @@
 package com.xebia.akka.supervision;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
+import static org.junit.Assert.*;
+
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
+import akka.dispatch.Await;
+import akka.pattern.Patterns;
+import akka.util.Duration;
 
 public class SupervisorTest {
 
-	private ActorRef supervisor;
-	
-	private Object[] objects=new Object[]{new Integer(1),new Integer(100),null,"Sameer",Long.valueOf(4l)};
-
 	@Test
-	public void shouldTestRestartability() throws Exception {
-		ActorSystem actorSystem=ActorSystem.create("Test");
-		supervisor = actorSystem.actorOf(new Props(Supervisor.class));
-		CountDownLatch countDownLatch=new CountDownLatch(1);
-		sendMessages();
-		countDownLatch.await();
-	}
+	public void test() throws Exception {
+		ActorSystem actorSystem = ActorSystem.create("Test");
+		ActorRef supervisor = actorSystem.actorOf(new Props(Supervisor.class));
+		supervisor.tell(new Integer(55));
 
-	private void sendMessages() {
-		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
-				new Runnable() {
-					public void run() {
-						int counter=((int)RandomUtils.nextInt())%5;
-						supervisor.tell(objects[counter]);
-					}
-				}, 100, 10000, TimeUnit.MILLISECONDS);
+		Object result = Await.result(
+				Patterns.ask(supervisor, new Result(), 5000),
+				Duration.create(5000, TimeUnit.MILLISECONDS));
+		assertTrue(result instanceof Result);
 	}
 	
+	@Test(expected=IllegalArgumentException.class)
+	public void testException() throws Exception {
+		ActorSystem actorSystem = ActorSystem.create("Test");
+		ActorRef supervisor = actorSystem.actorOf(new Props(Supervisor.class));
+		supervisor.tell(new Integer(45));
+
+		Object result = Await.result(
+				Patterns.ask(supervisor, new Result(), 5000),
+				Duration.create(5000, TimeUnit.MILLISECONDS));
+		//assertTrue(result instanceof Result);
+	}
+
 }
